@@ -5,6 +5,13 @@ type post =
     contents: string;
     html: string;
     title: string;
+    html_path: string;
+  }
+
+type site =
+  { base_dir: string;
+    posts : post list;
+    template: string;
   }
 
 let get_title md = 
@@ -21,37 +28,34 @@ let md_to_post path =
   let md = Omd.of_string contents in
   let title = get_title md in
   let html = Omd.to_html (Omd.of_string contents) in
-  { path = "asdf"; contents; html; title; }
-;;
+  let html_path = String.chop_suffix_exn path ~suffix:".md" ^ ".html" in
+  { path; contents; html; title; html_path; }
 
-(**
- From a dir, get a list of all md files (fqn)
-*)
 let list_dir dir =
   let is_md path = String.is_suffix path ~suffix:".md" in
   Sys.ls_dir dir
   |> List.filter ~f:is_md
 
-let post_with_template template post =
-  let re = Str.regexp "{{BODY}}" in
-  Str.replace_first re post.html template
-  |> Str.replace_first (Str.regexp "{{TITLE}}") post.title
+let apply_template template post =
+  { post with html = 
+      Str.replace_first (Str.regexp "{{BODY}}") post.html template
+      |> Str.replace_first (Str.regexp "{{TITLE}}") post.title }
 
-let all_html dir = 
+let all_html dir template = 
+  list_dir dir
+  |> List.map ~f:md_to_post
+  |> List.map ~f:(apply_template template)
+
+let write site =
+  let write_html post = Out_channel.write_all post.html_path ~data:post.html in
+  List.iter site.posts ~f:write_html
+  
+let build_site dir =
   let template_path = Filename.concat dir "post.html" in
   let template = In_channel.read_all template_path in
-  let apply_template = fun post -> post_with_template template post in
-  let all_mds = list_dir dir in
-  all_mds
-  |> List.map ~f:md_to_post
-  |> List.map ~f:apply_template 
-  |> List.zip_exn all_mds
-
-let write_html dir (path, html) =
-  let html_path = String.chop_suffix_exn path ~suffix:".md" ^ ".html" in
-  Out_channel.write_all (Filename.concat dir html_path) ~data:html
-
+  let posts = all_html dir template in
+  { base_dir = dir; posts; template; }
+  
 let generate dir =
-  let htmls = all_html dir in
-  let write = write_html dir in
-  List.iter htmls ~f:write
+  build_site dir
+  |> write
