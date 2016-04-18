@@ -9,7 +9,7 @@ Library ocs
   Path:       src
   BuildTools: ocamlbuild
   Modules:    Ocs
-  BuildDepends: core, omd, str
+  BuildDepends: core, omd, str, jingoo
 
 Executable ocs
   Path:       src
