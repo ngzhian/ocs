@@ -2,4 +2,4 @@ open Core.Std
 
 let () =
   let open Ocs in
-    Ocs.generate "."
+    Ocs.generate { dir = "." }
