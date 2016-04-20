@@ -1,6 +1,6 @@
 true: thread,debug
 # OASIS_START
-# DO NOT EDIT (digest: 5f4dc247b301de8076b5cf12bab85d78)
+# DO NOT EDIT (digest: 73231f1c2cb998dee82116742bc02497)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -19,16 +19,24 @@ true: annot, bin_annot
 "src/ocs.cmxs": use_ocs
 # Executable ocs
 "src/ocs_main.byte": pkg_core
+"src/ocs_main.byte": pkg_jingoo
 "src/ocs_main.byte": pkg_omd
+"src/ocs_main.byte": pkg_str
 "src/ocs_main.byte": use_ocs
 <src/*.ml{,i,y}>: pkg_core
+<src/*.ml{,i,y}>: pkg_jingoo
 <src/*.ml{,i,y}>: pkg_omd
+<src/*.ml{,i,y}>: pkg_str
 <src/*.ml{,i,y}>: use_ocs
 # Executable test_spec
 "tests/test_spec.byte": pkg_core
+"tests/test_spec.byte": pkg_jingoo
 "tests/test_spec.byte": pkg_omd
+"tests/test_spec.byte": pkg_str
 "tests/test_spec.byte": use_ocs
 <tests/*.ml{,i,y}>: pkg_core
+<tests/*.ml{,i,y}>: pkg_jingoo
 <tests/*.ml{,i,y}>: pkg_omd
+<tests/*.ml{,i,y}>: pkg_str
 <tests/*.ml{,i,y}>: use_ocs
 # OASIS_STOP
