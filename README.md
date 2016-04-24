@@ -18,7 +18,7 @@ $ ocaml setup.ml -install
 
 Your markdown files should be in a directory.
 Template files are in a folder called `template`.
-There are two template files right now:
+OCS understands two template files right now:
 
 - `index.html`
 - `post.html`
@@ -31,3 +31,12 @@ $ ocs
 
 By default all the html files will be generated in the same directory.
 This entire directory can then be uploaded GitHub pages.
+
+Your markdown files can have special metadata that ocs recognizes at the top of the file.
+
+```
+Title: Post title
+Date: 2016-04-01
+```
+
+An example layout is found in the `example/` folder
