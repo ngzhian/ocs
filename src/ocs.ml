@@ -6,6 +6,7 @@ type post =
     html: string;
     title: string;
     html_path: string;
+    date: Unix.tm;
   }
 
 type site =
@@ -22,15 +23,6 @@ type config =
     output_dir: string;
   }
 
-let get_title md = 
-  match md with
-  | (Omd.H1 h1) :: _ -> (
-    match h1 with
-    | (Omd.Text t) :: _ -> t
-    | _ -> ""
-  )
-  | _ -> ""
-
 let is_md path =
   String.is_suffix path ~suffix:".mdown"
 
@@ -38,17 +30,41 @@ let search_for_mds md_dir =
   Sys.ls_dir md_dir
   |> List.filter ~f:is_md
 
+let parse_date =
+  Unix.strptime ~fmt:"%F"
+
+let date_string t =
+  Unix.strftime t "%F"
+
+let read_header contents =
+  let open Option in
+  let headers = List.take_while contents ~f:((<>) "") in
+  let (_, body) = List.split_n contents (List.length headers) in
+  let find_with_prefix _prefix =
+    List.find headers ~f:(String.is_prefix ~prefix:_prefix)
+    >>= (String.chop_prefix ~prefix:_prefix)
+    |> value ~default:"" in
+  let title = find_with_prefix "Title: " in
+  let date = find_with_prefix "Date: " in
+  (title, parse_date date, (String.concat ~sep:"\n" body))
+
 let md_to_post md_dir path =
-  let contents = In_channel.read_all (Filename.concat md_dir path) in
-  let md = Omd.of_string contents in
-  let title = get_title md in
+  let content_lines = In_channel.read_lines (Filename.concat md_dir path) in
+  let (title, date, contents) = read_header content_lines in
   let html = Omd.to_html (Omd.of_string contents) in
   let html_path = String.chop_suffix_exn path ~suffix:".mdown" ^ ".html" in
-  { path; contents; html; title; html_path }
+  { path; contents; html; title; html_path ; date}
+
+let tobj_of_post post =
+  let open Jg_types in
+  Tobj [ ("content", Tstr post.html)
+         ; ("title", Tstr post.title)
+         ; ("html_path", Tstr post.html_path)
+         ; ("date", Tstr (date_string post.date))]
 
 let apply_template template post =
+  let post_model = tobj_of_post post in
   let open Jg_types in
-  let post_model = Tobj [("content", Tstr post.html); ("title", Tstr post.title)] in
   let html = Jg_template.from_string template ~models:[("post", post_model)] in
   { post with html }
 
@@ -72,11 +88,10 @@ let build_site config =
   { post_paths; template; posts = []; index_template_path; index = "" }
 
 let build_index site =
-  let posts = site.posts in
+  let compare_date p1 p2 = -(int_of_float (Unix.timegm p1.date -. Unix.timegm p2.date)) in
+  let posts = List.sort ~cmp:compare_date site.posts in
+  let _posts = List.map posts ~f:tobj_of_post in
   let open Jg_types in
-  let extract_title_and_html_path post =
-    Tobj [("title", Tstr post.title); ("html_path", Tstr post.html_path)] in
-  let _posts = List.map posts ~f:extract_title_and_html_path in
   let index = Jg_template.from_file site.index_template_path ~models:[("posts", Tlist _posts)] in
   { site with index }
 
@@ -93,7 +108,7 @@ let generate config =
   |> convert config
   |> write config
 
-let default_config = 
+let default_config =
   { md_dir = "."
   ; output_dir = "."
   ; template_dir = Filename.concat "." "template"
@@ -115,7 +130,7 @@ let () =
     Command.Spec.(
       empty
       +> flag "-m" (optional_with_default (Filename.concat "." "posts") string) ~doc:"directory"
-      +> flag "-t" (optional_with_default (Filename.concat "." "tempate") string) ~doc:"directory"
+      +> flag "-t" (optional_with_default (Filename.concat "." "template") string) ~doc:"directory"
       +> flag "-o" (optional_with_default "." string) ~doc:"directory"
     )
     generate_with_dir

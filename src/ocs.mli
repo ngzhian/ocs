@@ -6,6 +6,7 @@ type post =
     html: string;
     title: string;
     html_path: string;
+    date: Unix.tm;
   }
 
 type site =
@@ -34,8 +35,6 @@ val generate : config -> unit
 val generate_default : unit -> unit
 
 val apply_template : string -> post -> post
-
-val get_title : Omd.t -> string
 
 val build_site : config -> site
 val convert : config -> site -> site
