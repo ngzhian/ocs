@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+
+  <body>
+    <div class="content">
+      <section id="content" class="body">
+        <time class="published">
+        {{ post.date }}
+        </time>
+        <h1>
+        {{ post.title }}
+	</h1>
+        <div class="entry-content">
+        {{ post.content|safe }}
+        </div>
+      </section>
+    </div>
+  </body>
+</html>
