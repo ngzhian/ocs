@@ -9,21 +9,10 @@ Library ocs
   Path:       src
   BuildTools: ocamlbuild
   Modules:    Ocs
-  BuildDepends: core, omd, str, jingoo
+  BuildDepends: core, omd, str, mustache, ezjsonm
 
 Executable ocs
   Path:       src
   BuildTools: ocamlbuild
-  MainIs:     ocs_main.ml
+  MainIs:     ocs.ml
   BuildDepends: ocs
-
-Executable test_spec
-  Path: tests
-  BuildTools: ocamlbuild
-  MainIs: test_spec.ml
-  BuildDepends: ocs
-
-Test "spec"
-  Type: Custom (0.0.1)
-  Command: $test_spec
-  

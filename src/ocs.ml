@@ -56,16 +56,14 @@ let md_to_post md_dir path =
   { path; contents; html; title; html_path ; date}
 
 let tobj_of_post post =
-  let open Jg_types in
-  Tobj [ ("content", Tstr post.html)
-         ; ("title", Tstr post.title)
-         ; ("html_path", Tstr post.html_path)
-         ; ("date", Tstr (date_string post.date))]
+  let open Ezjsonm in
+  dict [ ("content", string post.html)
+       ; ("title", string post.title)
+       ; ("html_path", string post.html_path)
+       ; ("date", string (date_string post.date))]
 
-let apply_template template post =
-  let post_model = tobj_of_post post in
-  let open Jg_types in
-  let html = Jg_template.from_string template ~models:[("post", post_model)] in
+let apply_template tmpl post =
+  let html = Mustache.render (Mustache.of_string tmpl) (tobj_of_post post) in
   { post with html }
 
 let make_output_folder output_dir =
@@ -90,9 +88,9 @@ let build_site config =
 let build_index site =
   let compare_date p1 p2 = -(int_of_float (Unix.timegm p1.date -. Unix.timegm p2.date)) in
   let posts = List.sort ~cmp:compare_date site.posts in
-  let _posts = List.map posts ~f:tobj_of_post in
-  let open Jg_types in
-  let index = Jg_template.from_file site.index_template_path ~models:[("posts", Tlist _posts)] in
+  let _posts = Ezjsonm.dict [ ("posts", Ezjsonm.list tobj_of_post posts) ] in
+  let tmpl = In_channel.read_all site.index_template_path in
+  let index = Mustache.render (Mustache.of_string tmpl) (_posts) in
   { site with index }
 
 let convert config site =
