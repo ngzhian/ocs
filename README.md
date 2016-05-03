@@ -8,9 +8,10 @@ Simple static blog generator
 - Fast
 - OCaml code that's easy to read for learning
 
-## Usage
+## Developing
 
 ```
+$ opam install core omd mustache ezjsonm
 $ ocaml setup.ml -configure
 $ ocaml setup.ml -build
 $ ocaml setup.ml -install
