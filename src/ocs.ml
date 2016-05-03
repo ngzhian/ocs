@@ -100,7 +100,7 @@ let convert config site =
     |> List.map ~f:(apply_template site.template) in
   { site with posts }
   |> build_index
-  
+
 let generate config =
   build_site config
   |> convert config
