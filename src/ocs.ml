@@ -21,6 +21,7 @@ type config =
   { md_dir: string;
     template_dir: string;
     output_dir: string;
+    use_pandoc: bool;
   }
 
 let is_md path =
@@ -48,12 +49,27 @@ let read_header contents =
   let date = find_with_prefix "Date: " in
   (title, parse_date date, (String.concat ~sep:"\n" body))
 
-let md_to_post md_dir path =
+let md_to_post_using_omd md_dir path =
   let content_lines = In_channel.read_lines (Filename.concat md_dir path) in
   let (title, date, contents) = read_header content_lines in
   let html = Omd.to_html (Omd.of_string contents) in
   let html_path = String.chop_suffix_exn path ~suffix:".mdown" ^ ".html" in
   { path; contents; html; title; html_path ; date}
+
+let md_to_post_using_pandoc md_dir path =
+  let content_lines = In_channel.read_lines (Filename.concat md_dir path) in
+  let (title, date, contents) = read_header content_lines in
+  let md_path = Filename.concat md_dir path in
+  let html_path = String.chop_suffix_exn path ~suffix:".mdown" ^ ".html" in
+  (* do something with exit code *)
+  let _ = Sys.command ("pandoc -f markdown -t html -o " ^ html_path ^ " " ^ md_path) in
+  let html = In_channel.read_all html_path in
+  { path; contents; html; title; html_path ; date}
+
+let md_to_post md_dir use_pandoc path =
+  if use_pandoc
+  then md_to_post_using_pandoc md_dir path
+  else md_to_post_using_omd md_dir path
 
 let tobj_of_post post =
   let open Ezjsonm in
@@ -94,9 +110,9 @@ let build_index site =
   { site with index }
 
 let convert config site =
-  let posts = 
+  let posts =
     site.post_paths
-    |> List.map ~f:(md_to_post config.md_dir)
+    |> List.map ~f:(md_to_post config.md_dir config.use_pandoc)
     |> List.map ~f:(apply_template site.template) in
   { site with posts }
   |> build_index
@@ -110,13 +126,14 @@ let default_config =
   { md_dir = "."
   ; output_dir = "."
   ; template_dir = Filename.concat "." "template"
+  ; use_pandoc = false
   }
 
 let generate_default () =
   generate default_config
 
-let generate_with_dir md_dir template_dir output_dir () =
-  generate { md_dir ; output_dir ; template_dir }
+let generate_with_dir md_dir template_dir output_dir use_pandoc () =
+  generate { md_dir ; output_dir ; template_dir; use_pandoc }
 
 (**
  *  Command line interface to ocs.
@@ -130,6 +147,7 @@ let () =
       +> flag "-m" (optional_with_default (Filename.concat "." "posts") string) ~doc:"directory"
       +> flag "-t" (optional_with_default (Filename.concat "." "template") string) ~doc:"directory"
       +> flag "-o" (optional_with_default "." string) ~doc:"directory"
+      +> flag "-p" (optional_with_default false bool) ~doc:"use pandoc"
     )
     generate_with_dir
 )

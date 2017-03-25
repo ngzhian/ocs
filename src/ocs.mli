@@ -26,9 +26,10 @@ type config =
   { md_dir: string;
     template_dir: string;
     output_dir: string;
+    use_pandoc: bool;
   }
 
-val md_to_post : string -> string -> post
+val md_to_post : string -> bool -> string -> post
 val search_for_mds : string -> string list
 
 val generate : config -> unit
