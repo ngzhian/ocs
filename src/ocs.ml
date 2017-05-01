@@ -22,6 +22,7 @@ type config =
     template_dir: string;
     output_dir: string;
     use_pandoc: bool;
+    single_file: string option;
   }
 
 let is_md path =
@@ -98,7 +99,9 @@ let build_site config =
   let template_path = Filename.concat config.template_dir "post.html" in
   let template = In_channel.read_all template_path in
   let index_template_path = Filename.concat config.template_dir "index.html" in
-  let post_paths = search_for_mds config.md_dir in
+  let post_paths = match config.single_file with
+  | None -> search_for_mds config.md_dir
+  | Some file -> [file] in
   { post_paths; template; posts = []; index_template_path; index = "" }
 
 let build_index site =
@@ -127,13 +130,14 @@ let default_config =
   ; output_dir = "."
   ; template_dir = Filename.concat "." "template"
   ; use_pandoc = false
+  ; single_file = None
   }
 
 let generate_default () =
   generate default_config
 
-let generate_with_dir md_dir template_dir output_dir use_pandoc () =
-  generate { md_dir ; output_dir ; template_dir; use_pandoc }
+let generate_with_dir md_dir template_dir output_dir use_pandoc single_file () =
+  generate { md_dir ; output_dir ; template_dir; use_pandoc; single_file }
 
 (**
  *  Command line interface to ocs.
@@ -148,6 +152,7 @@ let () =
       +> flag "-t" (optional_with_default (Filename.concat "." "template") string) ~doc:"directory"
       +> flag "-o" (optional_with_default "." string) ~doc:"directory"
       +> flag "-p" (optional_with_default false bool) ~doc:"use pandoc"
+      +> flag "-f" (optional string ) ~doc:"only parse one file"
     )
     generate_with_dir
 )
