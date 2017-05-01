@@ -46,8 +46,8 @@ let read_header contents =
     List.find headers ~f:(String.is_prefix ~prefix:_prefix)
     >>= (String.chop_prefix ~prefix:_prefix)
     |> value ~default:"" in
-  let title = find_with_prefix "Title: " in
-  let date = find_with_prefix "Date: " in
+  let title = find_with_prefix "title: " in
+  let date = find_with_prefix "date: " in
   (title, parse_date date, (String.concat ~sep:"\n" body))
 
 let md_to_post_using_omd md_dir path =
