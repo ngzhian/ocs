@@ -1,5 +1,7 @@
+---
 title: title of post
 date: 2016-04-01
+...
 
 Write your posts in markdown!
 
