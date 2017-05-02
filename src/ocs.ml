@@ -23,6 +23,7 @@ type config =
     output_dir: string;
     use_pandoc: bool;
     single_file: string option;
+    index_only: bool;
   }
 
 let is_md path =
@@ -92,9 +93,11 @@ let write config site =
   make_output_folder config.output_dir;
   let html_path post = Filename.concat config.output_dir post.html_path in
   let write_html post = Out_channel.write_all (html_path post) ~data:post.html in
-  List.iter site.posts ~f:write_html;
+  if not(config.index_only)
+  then List.iter site.posts ~f:write_html
+  else ();
   Out_channel.write_all (Filename.concat config.output_dir "index.html") ~data:site.index
-  
+
 let build_site config =
   let template_path = Filename.concat config.template_dir "post.html" in
   let template = In_channel.read_all template_path in
@@ -131,20 +134,21 @@ let default_config =
   ; template_dir = Filename.concat "." "template"
   ; use_pandoc = false
   ; single_file = None
+  ; index_only = false
   }
 
 let generate_default () =
   generate default_config
 
-let generate_with_dir md_dir template_dir output_dir use_pandoc single_file () =
-  generate { md_dir ; output_dir ; template_dir; use_pandoc; single_file }
+let generate_with_dir md_dir template_dir output_dir use_pandoc single_file index_only () =
+  generate { md_dir ; output_dir ; template_dir; use_pandoc; single_file; index_only }
 
 (**
  *  Command line interface to ocs.
  *)
 let () =
   Command.run ~version:"1.0" (
-    Command.basic 
+    Command.basic
     ~summary:"Generate a static blog from markdown"
     Command.Spec.(
       empty
@@ -153,6 +157,7 @@ let () =
       +> flag "-o" (optional_with_default "." string) ~doc:"directory"
       +> flag "-p" (optional_with_default false bool) ~doc:"use pandoc"
       +> flag "-f" (optional string ) ~doc:"only parse one file"
+      +> flag "-i" (optional_with_default false bool) ~doc:"index only"
     )
     generate_with_dir
 )

@@ -28,6 +28,7 @@ type config =
     output_dir: string;
     use_pandoc: bool;
     single_file: string option;
+    index_only: bool;
   }
 
 val md_to_post : string -> bool -> string -> post
