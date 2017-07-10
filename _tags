@@ -1,6 +1,6 @@
 true: thread,debug
 # OASIS_START
-# DO NOT EDIT (digest: 48d452de5893284d620ede7f9030597d)
+# DO NOT EDIT (digest: 3bdc83d54a78d1ccb6c74d05634580f4)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -22,10 +22,12 @@ true: annot, bin_annot
 "src/ocs.byte": pkg_ezjsonm
 "src/ocs.byte": pkg_mustache
 "src/ocs.byte": pkg_omd
+"src/ocs.byte": pkg_rss
 "src/ocs.byte": use_ocs
 <src/*.ml{,i,y}>: pkg_core
 <src/*.ml{,i,y}>: pkg_ezjsonm
 <src/*.ml{,i,y}>: pkg_mustache
 <src/*.ml{,i,y}>: pkg_omd
+<src/*.ml{,i,y}>: pkg_rss
 <src/*.ml{,i,y}>: use_ocs
 # OASIS_STOP

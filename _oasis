@@ -9,7 +9,7 @@ Library ocs
   Path:       src
   BuildTools: ocamlbuild
   Modules:    Ocs
-  BuildDepends: core, omd, mustache, ezjsonm
+  BuildDepends: core, omd, mustache, ezjsonm, rss
 
 Executable ocs
   Path:       src
