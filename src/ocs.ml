@@ -40,16 +40,18 @@ let parse_date =
 let date_string t =
   Unix.strftime t "%F"
 
+let find_with_prefix headers prefix =
+  Option.(
+    List.find headers ~f:(String.is_prefix ~prefix:prefix)
+    >>= (String.chop_prefix ~prefix:prefix)
+    |> value ~default:""
+  )
+
 let read_header contents =
-  let open Option in
   let headers = List.take_while contents ~f:((<>) "") in
   let (_, body) = List.split_n contents (List.length headers) in
-  let find_with_prefix _prefix =
-    List.find headers ~f:(String.is_prefix ~prefix:_prefix)
-    >>= (String.chop_prefix ~prefix:_prefix)
-    |> value ~default:"" in
-  let title = find_with_prefix "title: " in
-  let date = find_with_prefix "date: " in
+  let title = find_with_prefix headers "title: " in
+  let date = find_with_prefix headers "date: " in
   (title, parse_date date, (String.concat ~sep:"\n" body))
 
 let md_to_post_using_omd md_dir path =
@@ -109,38 +111,37 @@ let build_site config =
   | Some file -> [file] in
   { post_paths; template; posts = []; index_template_path; index = ""; rss = "" }
 
-let build_index site =
-  let posts = Ezjsonm.dict [ ("posts", Ezjsonm.list tobj_of_post site.posts) ] in
-  let tmpl = In_channel.read_all site.index_template_path in
-  let index = Mustache.render (Mustache.of_string tmpl) (posts) in
-  { site with index }
+let build_index posts index_template_path =
+  let posts = Ezjsonm.dict [ ("posts", Ezjsonm.list tobj_of_post posts) ] in
+  let tmpl = In_channel.read_all index_template_path in
+  Mustache.render (Mustache.of_string tmpl) (posts)
 
 let base_url = "https://blog.ngzhian.com/"
 let url_of_string s = Neturl.url_of_string Neturl.ip_url_syntax s
 
-let build_rss site =
+let build_rss posts =
   let get_date post = Netdate.create (fst (Unix.mktime post.date)) in
   let item post =
     let link = url_of_string (base_url ^ post.html_path) in
     Rss.(item ~title:post.title ~pubdate:(get_date post) ~link:link ~guid:(Guid_permalink link) ()) in
-  let items = List.map site.posts item in
+  let items = List.map posts item in
   let feed = Rss.(
     channel ~title:"Blog" ~desc:"blog" ~link:(url_of_string base_url) items
   ) in
   let _ = Rss.print_channel ~indent:2 (Format.str_formatter) feed in
   let rss = Format.flush_str_formatter () in
-  { site with rss }
+  rss
 
+let compare_date p1 p2 = -(int_of_float (Unix.timegm p1.date -. Unix.timegm p2.date))
 let convert config site =
-  let compare_date p1 p2 = -(int_of_float (Unix.timegm p1.date -. Unix.timegm p2.date)) in
   let posts =
     site.post_paths
     |> List.map ~f:(md_to_post config.md_dir config.use_pandoc)
     |> List.map ~f:(apply_template site.template)
     |> List.sort ~cmp:compare_date in
-  { site with posts }
-  |> build_index
-  |> build_rss
+  let index = build_index posts site.index_template_path in
+  let rss = build_rss posts in
+  { { { site with posts } with index } with rss }
 
 let generate config =
   build_site config
