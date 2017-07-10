@@ -98,7 +98,7 @@ let write config site =
   then List.iter site.posts ~f:write_html
   else ();
   Out_channel.write_all (Filename.concat config.output_dir "index.html") ~data:site.index;
-  Out_channel.write_all (Filename.concat config.output_dir "feed.rss") ~data:site.rss
+  Out_channel.write_all (Filename.concat config.output_dir "rss.xml") ~data:site.rss
 
 let build_site config =
   let template_path = Filename.concat config.template_dir "post.html" in
