@@ -16,6 +16,7 @@ type site =
     template: string;
     index_template_path: string;
     index: string;
+    rss: string;
   }
 
 (** md_dir: directory to find md files (defaults to "./posts")
